@@ -2,6 +2,8 @@
 
 _quite simple._
 
+[![asciicast](https://asciinema.org/a/0l2idi5gusbbcrv416ylv7rij.png)](https://asciinema.org/a/0l2idi5gusbbcrv416ylv7rij)
+
 ## Running
 
     cd go-paste/src

@@ -79,6 +79,7 @@ func retrieveHandler(res http.ResponseWriter, req *http.Request) {
 	if _, err := os.Stat("../pastes/" + vars["id"]); err != nil {
 		res.WriteHeader(http.StatusNoContent)
 		fmt.Fprint(res, "No such paste")
+		log.Fatal(err)
 		return
 	}
 
