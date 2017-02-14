@@ -69,7 +69,7 @@ func saveFileAndRespond(buf *[]byte, c net.Conn) {
 	io.WriteString(f, string(bytes.Trim(*buf, "\x00")))
 
 	// Send back the newly created hash (name of the paste/file)
-	io.WriteString(c, "/"+sum32String)
+	io.WriteString(c, sum32String)
 }
 
 // This will deal with the request to retrieve a paste
