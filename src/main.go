@@ -40,14 +40,16 @@ func create() {
 
 			c.Read(buf)
 
-			go saveFileAndRespond(&buf, c)
+			go func() {
+				var fileName string = saveFile(&buf)
+				c.Write([]byte(fileName))
+				c.Close()
+			}()
 		}(conn)
 	}
 }
 
-func saveFileAndRespond(buf *[]byte, c net.Conn) {
-	defer c.Close()
-
+func saveFile(buf *[]byte) string {
 	h := fnv.New32a()
 	h.Write(*buf)
 
@@ -60,7 +62,6 @@ func saveFileAndRespond(buf *[]byte, c net.Conn) {
 
 	if err != nil {
 		log.Fatal(err)
-		io.WriteString(c, err.Error())
 	}
 
 	defer f.Close()
@@ -68,26 +69,18 @@ func saveFileAndRespond(buf *[]byte, c net.Conn) {
 	// Remove the null values from the file
 	io.WriteString(f, string(bytes.Trim(*buf, "\x00")))
 
-	// Send back the newly created hash (name of the paste/file)
-	io.WriteString(c, sum32String)
+	return sum32String
 }
 
 // This will deal with the request to retrieve a paste
 func retrieveHandler(res http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 
-	if _, err := os.Stat("../pastes/" + vars["id"]); err != nil {
-		res.WriteHeader(http.StatusNoContent)
-		fmt.Fprint(res, "No such paste")
-		log.Fatal(err)
-		return
-	}
-
 	f, err := ioutil.ReadFile("../pastes/" + vars["id"])
 
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(res, "Error encountered while trying to access paste")
+		log.Print("Error encountered while trying to access paste")
 		log.Fatal(err)
 		return
 	}
@@ -99,11 +92,24 @@ func retrieveHandler(res http.ResponseWriter, req *http.Request) {
 	res.Write(f)
 }
 
+func formUploadHandler(res http.ResponseWriter, req *http.Request) {
+	// Convert from string->[]byte
+	var code []byte = []byte(req.FormValue("code"))
+
+	var fileName string = saveFile(&code)
+
+	log.Print("Redirecting, created file ", fileName)
+	http.Redirect(res, req, "/"+fileName, 301)
+}
+
 func retrieve() {
 	router := mux.NewRouter().StrictSlash(true)
 
 	// Retrieve paste
-	router.HandleFunc("/{id:[1-9]+}", retrieveHandler).Methods("GET")
+	router.HandleFunc("/{id:[0-9]+}", retrieveHandler).Methods("GET")
+
+	// Form submit
+	router.HandleFunc("/create", formUploadHandler).Methods("POST")
 
 	// Homepage
 	router.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
