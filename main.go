@@ -58,7 +58,7 @@ func saveFile(buf *[]byte) string {
 
 	log.Print("Saving new paste with name: ", sum32String)
 
-	f, err := os.OpenFile("../pastes/"+sum32String, os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile("pastes/"+sum32String, os.O_WRONLY|os.O_CREATE, 0666)
 
 	if err != nil {
 		log.Fatal(err)
@@ -76,7 +76,7 @@ func saveFile(buf *[]byte) string {
 func retrieveHandler(res http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 
-	f, err := ioutil.ReadFile("../pastes/" + vars["id"])
+	f, err := ioutil.ReadFile("pastes/" + vars["id"])
 
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -114,7 +114,7 @@ func retrieve() {
 	// Homepage
 	router.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		log.Print("Serving index.html")
-		http.ServeFile(res, req, "./index.html")
+		http.ServeFile(res, req, "./src/index.html")
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", router))
