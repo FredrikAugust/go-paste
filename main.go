@@ -16,7 +16,7 @@ import (
 // Max file size
 const MAX_LENGTH = 3 << 20 // 3 MiB
 
-func tcpServer() {
+func TCPServer() {
 	l, err := net.Listen("tcp", ":2020")
 
 	defer l.Close()
@@ -47,14 +47,14 @@ func tcpServer() {
 				return
 			}
 
-			var fileName string = saveFile(&buf)
+			var fileName string = SaveFile(&buf)
 			c.Write([]byte(fileName))
 			c.Close()
 		}(conn)
 	}
 }
 
-func saveFile(buf *[]byte) string {
+func SaveFile(buf *[]byte) string {
 	h := fnv.New32a()
 	h.Write(*buf)
 
@@ -79,7 +79,7 @@ func saveFile(buf *[]byte) string {
 }
 
 // This will deal with the request to retrieve a paste
-func retrieveHandler(res http.ResponseWriter, req *http.Request) {
+func RetrieveHandler(res http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 
 	_, err := os.Stat("pastes/" + vars["id"])
@@ -106,24 +106,24 @@ func retrieveHandler(res http.ResponseWriter, req *http.Request) {
 	res.Write(f)
 }
 
-func formUploadHandler(res http.ResponseWriter, req *http.Request) {
+func FormUploadHandler(res http.ResponseWriter, req *http.Request) {
 	// Convert from string->[]byte
 	code := []byte(req.FormValue("code"))
 
-	var fileName string = saveFile(&code)
+	var fileName string = SaveFile(&code)
 
 	log.Print("Redirecting, created file ", fileName)
 	http.Redirect(res, req, "/"+fileName, http.StatusMovedPermanently)
 }
 
-func httpServer() {
+func HttpServer() {
 	router := mux.NewRouter().StrictSlash(true)
 
 	// Retrieve paste
-	router.HandleFunc("/{id:[0-9]+}", retrieveHandler).Methods("GET")
+	router.HandleFunc("/{id:[0-9]+}", RetrieveHandler).Methods("GET")
 
 	// Form submit
-	router.HandleFunc("/create", formUploadHandler).Methods("POST")
+	router.HandleFunc("/create", FormUploadHandler).Methods("POST")
 
 	// Homepage
 	router.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
@@ -135,6 +135,6 @@ func httpServer() {
 }
 
 func main() {
-	go httpServer()
-	tcpServer()
+	go HttpServer()
+	TCPServer()
 }
