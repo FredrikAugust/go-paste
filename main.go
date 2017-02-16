@@ -40,11 +40,9 @@ func create() {
 
 			c.Read(buf)
 
-			go func() {
-				var fileName string = saveFile(&buf)
-				c.Write([]byte(fileName))
-				c.Close()
-			}()
+			var fileName string = saveFile(&buf)
+			c.Write([]byte(fileName))
+			c.Close()
 		}(conn)
 	}
 }
