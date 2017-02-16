@@ -22,7 +22,7 @@ func TCPServer() {
 	defer l.Close()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return
 	}
 
@@ -30,7 +30,7 @@ func TCPServer() {
 		conn, err := l.Accept()
 
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
 			return
 		}
 
@@ -43,7 +43,7 @@ func TCPServer() {
 			_, err := c.Read(buf)
 
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err)
 				return
 			}
 
@@ -68,7 +68,7 @@ func SaveFile(buf *[]byte) string {
 	defer f.Close()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return ""
 	}
 
@@ -85,7 +85,7 @@ func RetrieveHandler(res http.ResponseWriter, req *http.Request) {
 	_, err := os.Stat("pastes/" + vars["id"])
 
 	if err != nil {
-		log.Fatal("Could not find paste: " + err.Error())
+		log.Print(err.Error())
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -95,7 +95,7 @@ func RetrieveHandler(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		log.Print("Error encountered while trying to access paste")
-		log.Fatal(err)
+		log.Print(err)
 		return
 	}
 
