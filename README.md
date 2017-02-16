@@ -7,7 +7,7 @@ _quite simple._
 ## Running
 
     go build
-    ./main.go
+    ./go-paste
 
 ## Using
 
