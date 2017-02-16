@@ -16,20 +16,22 @@ import (
 // Max file size
 const MAX_LENGTH = 3 << 20 // 3 MiB
 
-func create() {
+func tcpServer() {
 	l, err := net.Listen("tcp", ":2020")
+
+	defer l.Close()
 
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
-
-	defer l.Close()
 
 	for {
 		conn, err := l.Accept()
 
 		if err != nil {
 			log.Fatal(err)
+			return
 		}
 
 		// Respond
@@ -38,7 +40,12 @@ func create() {
 
 			buf := make([]byte, MAX_LENGTH)
 
-			c.Read(buf)
+			_, err := c.Read(buf)
+
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
 
 			var fileName string = saveFile(&buf)
 			c.Write([]byte(fileName))
@@ -58,11 +65,12 @@ func saveFile(buf *[]byte) string {
 
 	f, err := os.OpenFile("pastes/"+sum32String, os.O_WRONLY|os.O_CREATE, 0666)
 
+	defer f.Close()
+
 	if err != nil {
 		log.Fatal(err)
+		return ""
 	}
-
-	defer f.Close()
 
 	// Remove the null values from the file
 	io.WriteString(f, string(bytes.Trim(*buf, "\x00")))
@@ -73,6 +81,14 @@ func saveFile(buf *[]byte) string {
 // This will deal with the request to retrieve a paste
 func retrieveHandler(res http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
+
+	_, err := os.Stat("pastes/" + vars["id"])
+
+	if err != nil {
+		log.Fatal("Could not find paste: " + err.Error())
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	f, err := ioutil.ReadFile("pastes/" + vars["id"])
 
@@ -92,15 +108,15 @@ func retrieveHandler(res http.ResponseWriter, req *http.Request) {
 
 func formUploadHandler(res http.ResponseWriter, req *http.Request) {
 	// Convert from string->[]byte
-	var code []byte = []byte(req.FormValue("code"))
+	code := []byte(req.FormValue("code"))
 
 	var fileName string = saveFile(&code)
 
 	log.Print("Redirecting, created file ", fileName)
-	http.Redirect(res, req, "/"+fileName, 301)
+	http.Redirect(res, req, "/"+fileName, http.StatusMovedPermanently)
 }
 
-func retrieve() {
+func httpServer() {
 	router := mux.NewRouter().StrictSlash(true)
 
 	// Retrieve paste
@@ -119,6 +135,6 @@ func retrieve() {
 }
 
 func main() {
-	go retrieve()
-	create()
+	go httpServer()
+	tcpServer()
 }
