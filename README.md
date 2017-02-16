@@ -6,8 +6,8 @@ _quite simple._
 
 ## Running
 
-    cd go-paste/src
-    go main.go
+    go build
+    ./main.go
 
 ## Using
 
